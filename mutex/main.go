@@ -33,7 +33,7 @@ func (i *AtomicInt) Value() int {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 	return i.value
-} 
+}
 
 func main() {
 	var wg sync.WaitGroup
