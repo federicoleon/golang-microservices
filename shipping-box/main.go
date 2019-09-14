@@ -14,6 +14,8 @@ type Box struct {
 }
 
 func getBestBox(availableBoxes []Box, products []Product) Box {
+
 	//TODO: Complete!
+
 	return Box{}
 }
