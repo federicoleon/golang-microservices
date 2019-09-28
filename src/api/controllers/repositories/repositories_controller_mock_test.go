@@ -14,14 +14,14 @@ import (
 )
 
 var (
-	funcCreateRepo  func(request repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.ApiError)
+	funcCreateRepo  func(clientId string, request repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.ApiError)
 	funcCreateRepos func(request []repositories.CreateRepoRequest) (repositories.CreateReposResponse, errors.ApiError)
 )
 
 type repoServiceMock struct{}
 
-func (s *repoServiceMock) CreateRepo(request repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.ApiError) {
-	return funcCreateRepo(request)
+func (s *repoServiceMock) CreateRepo(clientId string, request repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.ApiError) {
+	return funcCreateRepo(clientId, request)
 }
 
 func (s *repoServiceMock) CreateRepos(request []repositories.CreateRepoRequest) (repositories.CreateReposResponse, errors.ApiError) {
@@ -31,7 +31,7 @@ func (s *repoServiceMock) CreateRepos(request []repositories.CreateRepoRequest) 
 func TestCreateRepoNoErrorMockingTheEntireService(t *testing.T) {
 	services.RepositoryService = &repoServiceMock{}
 
-	funcCreateRepo = func(request repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.ApiError) {
+	funcCreateRepo = func(clientId string, request repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.ApiError) {
 		return &repositories.CreateRepoResponse{
 			Id:    321,
 			Name:  "mocked service",
@@ -58,7 +58,7 @@ func TestCreateRepoNoErrorMockingTheEntireService(t *testing.T) {
 func TestCreateRepoErrorFromGithubMockingTheEntireService(t *testing.T) {
 	services.RepositoryService = &repoServiceMock{}
 
-	funcCreateRepo = func(request repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.ApiError) {
+	funcCreateRepo = func(clientId string, request repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.ApiError) {
 		return nil, errors.NewBadRequestError("invalid repository name")
 	}
 
