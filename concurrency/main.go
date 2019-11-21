@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	success map[string]string
-	failed  map[string]errors.ApiError
+	success = make(map[string]string, 0)
+	failed  = make(map[string]errors.ApiError, 0)
 )
 
 type createRepoResult struct {
@@ -76,7 +76,7 @@ func handleResults(wg *sync.WaitGroup, input chan createRepoResult) {
 }
 
 func createRepo(buffer chan bool, output chan createRepoResult, request repositories.CreateRepoRequest) {
-	result, err := services.RepositoryService.CreateRepo(request)
+	result, err := services.RepositoryService.CreateRepo("your_client_id", request)
 
 	output <- createRepoResult{
 		Request: request,
