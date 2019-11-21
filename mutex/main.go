@@ -43,7 +43,7 @@ func main() {
 	}
 	wg.Wait()
 	fmt.Println(fmt.Sprintf("final counter: %d", counter))
-	fmt.Println(fmt.Sprintf("final atomic counte valuer: %d", atomicCounter.Value()))
+	fmt.Println(fmt.Sprintf("final atomic counter value: %d", atomicCounter.Value()))
 }
 
 func updateCounter(wg *sync.WaitGroup) {
