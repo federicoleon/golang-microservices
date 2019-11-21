@@ -225,7 +225,7 @@ func TestCreateReposOneSuccessOneFail(t *testing.T) {
 	}
 }
 
-func TestCreateReposAllSuccess(t *testing.T) {
+func TestCreateReposRepoAlreadyExistsFailure(t *testing.T) {
 	restclient.FlushMockups()
 	restclient.AddMockup(restclient.Mock{
 		Url:        "https://api.github.com/user/repos",
@@ -245,16 +245,18 @@ func TestCreateReposAllSuccess(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
-	assert.EqualValues(t, http.StatusCreated, result.StatusCode)
+	assert.EqualValues(t, http.StatusPartialContent, result.StatusCode)
 	assert.EqualValues(t, 2, len(result.Results))
 
-	assert.Nil(t, result.Results[0].Error)
-	assert.EqualValues(t, 123, result.Results[0].Response.Id)
-	assert.EqualValues(t, "testing", result.Results[0].Response.Name)
-	assert.EqualValues(t, "federicoleon", result.Results[0].Response.Owner)
+	for _, result := range result.Results {
+		if result.Error != nil {
+			assert.EqualValues(t, http.StatusInternalServerError, result.Error.Status())
+			assert.EqualValues(t, "error when trying to unmarshal github create repo response", result.Error.Message())
+			continue
+		}
 
-	assert.Nil(t, result.Results[1].Error)
-	assert.EqualValues(t, 123, result.Results[1].Response.Id)
-	assert.EqualValues(t, "testing", result.Results[1].Response.Name)
-	assert.EqualValues(t, "federicoleon", result.Results[1].Response.Owner)
+		assert.EqualValues(t, 123, result.Response.Id)
+		assert.EqualValues(t, "testing", result.Response.Name)
+		assert.EqualValues(t, "federicoleon", result.Response.Owner)
+	}
 }
