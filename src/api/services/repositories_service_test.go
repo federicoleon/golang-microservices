@@ -1,16 +1,14 @@
 package services
 
 import (
-	"testing"
 	"github.com/federicoleon/golang-microservices/src/api/clients/restclient"
-	"os"
 	"github.com/federicoleon/golang-microservices/src/api/domain/repositories"
+	"github.com/federicoleon/golang-microservices/src/api/utils/errors"
 	"github.com/stretchr/testify/assert"
 	"net/http"
-	"io/ioutil"
-	"strings"
+	"os"
 	"sync"
-	"github.com/federicoleon/golang-microservices/src/api/utils/errors"
+	"testing"
 )
 
 func TestMain(m *testing.M) {
@@ -34,9 +32,9 @@ func TestCreateRepoErrorFromGithub(t *testing.T) {
 	restclient.AddMockup(restclient.Mock{
 		Url:        "https://api.github.com/user/repos",
 		HttpMethod: http.MethodPost,
+		BodyText:   `{"message": "Requires authentication","documentation_url": "https://developer.github.com/docs"}`,
 		Response: &http.Response{
 			StatusCode: http.StatusUnauthorized,
-			Body:       ioutil.NopCloser(strings.NewReader(`{"message": "Requires authentication","documentation_url": "https://developer.github.com/docs"}`)),
 		},
 	})
 	request := repositories.CreateRepoRequest{Name: "testing"}
@@ -53,9 +51,9 @@ func TestCreateRepoNoError(t *testing.T) {
 	restclient.AddMockup(restclient.Mock{
 		Url:        "https://api.github.com/user/repos",
 		HttpMethod: http.MethodPost,
+		BodyText:   `{"id": 123, "name": "testing", "owner": {"login": "federicoleon"}}`,
 		Response: &http.Response{
 			StatusCode: http.StatusCreated,
-			Body:       ioutil.NopCloser(strings.NewReader(`{"id": 123, "name": "testing", "owner": {"login": "federicoleon"}}`)),
 		},
 	})
 	request := repositories.CreateRepoRequest{Name: "testing"}
@@ -89,9 +87,9 @@ func TestCreateRepoConcurrentErrorFromGithub(t *testing.T) {
 	restclient.AddMockup(restclient.Mock{
 		Url:        "https://api.github.com/user/repos",
 		HttpMethod: http.MethodPost,
+		BodyText:   `{"message": "Requires authentication","documentation_url": "https://developer.github.com/docs"}`,
 		Response: &http.Response{
 			StatusCode: http.StatusUnauthorized,
-			Body:       ioutil.NopCloser(strings.NewReader(`{"message": "Requires authentication","documentation_url": "https://developer.github.com/docs"}`)),
 		},
 	})
 
@@ -115,9 +113,9 @@ func TestCreateRepoConcurrentNoError(t *testing.T) {
 	restclient.AddMockup(restclient.Mock{
 		Url:        "https://api.github.com/user/repos",
 		HttpMethod: http.MethodPost,
+		BodyText:   `{"id": 123, "name": "testing", "owner": {"login": "federicoleon"}}`,
 		Response: &http.Response{
 			StatusCode: http.StatusCreated,
-			Body:       ioutil.NopCloser(strings.NewReader(`{"id": 123, "name": "testing", "owner": {"login": "federicoleon"}}`)),
 		},
 	})
 
@@ -194,9 +192,9 @@ func TestCreateReposOneSuccessOneFail(t *testing.T) {
 	restclient.AddMockup(restclient.Mock{
 		Url:        "https://api.github.com/user/repos",
 		HttpMethod: http.MethodPost,
+		BodyText:   `{"id": 123, "name": "testing", "owner": {"login": "federicoleon"}}`,
 		Response: &http.Response{
 			StatusCode: http.StatusCreated,
-			Body:       ioutil.NopCloser(strings.NewReader(`{"id": 123, "name": "testing", "owner": {"login": "federicoleon"}}`)),
 		},
 	})
 
@@ -225,14 +223,14 @@ func TestCreateReposOneSuccessOneFail(t *testing.T) {
 	}
 }
 
-func TestCreateReposRepoAlreadyExistsFailure(t *testing.T) {
+func TestCreateReposTwoSuccess(t *testing.T) {
 	restclient.FlushMockups()
 	restclient.AddMockup(restclient.Mock{
 		Url:        "https://api.github.com/user/repos",
 		HttpMethod: http.MethodPost,
+		BodyText:   `{"id": 123, "name": "testing", "owner": {"login": "federicoleon"}}`,
 		Response: &http.Response{
 			StatusCode: http.StatusCreated,
-			Body:       ioutil.NopCloser(strings.NewReader(`{"id": 123, "name": "testing", "owner": {"login": "federicoleon"}}`)),
 		},
 	})
 
@@ -245,18 +243,15 @@ func TestCreateReposRepoAlreadyExistsFailure(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
-	assert.EqualValues(t, http.StatusPartialContent, result.StatusCode)
+	assert.EqualValues(t, http.StatusCreated, result.StatusCode)
 	assert.EqualValues(t, 2, len(result.Results))
 
-	for _, result := range result.Results {
-		if result.Error != nil {
-			assert.EqualValues(t, http.StatusInternalServerError, result.Error.Status())
-			assert.EqualValues(t, "error when trying to unmarshal github create repo response", result.Error.Message())
-			continue
-		}
+	assert.EqualValues(t, 123, result.Results[0].Response.Id)
+	assert.EqualValues(t, "testing", result.Results[0].Response.Name)
+	assert.EqualValues(t, "federicoleon", result.Results[0].Response.Owner)
 
-		assert.EqualValues(t, 123, result.Response.Id)
-		assert.EqualValues(t, "testing", result.Response.Name)
-		assert.EqualValues(t, "federicoleon", result.Response.Owner)
-	}
+	assert.EqualValues(t, 123, result.Results[1].Response.Id)
+	assert.EqualValues(t, "testing", result.Results[1].Response.Name)
+	assert.EqualValues(t, "federicoleon", result.Results[1].Response.Owner)
 }
+
