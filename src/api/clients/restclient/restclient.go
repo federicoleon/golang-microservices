@@ -1,11 +1,13 @@
 package restclient
 
 import (
-	"net/http"
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
 )
 
 var (
@@ -17,7 +19,13 @@ type Mock struct {
 	Url        string
 	HttpMethod string
 	Response   *http.Response
+	BodyText   string
 	Err        error
+}
+
+func (m *Mock) GetResponse() *http.Response {
+	m.Response.Body = ioutil.NopCloser(strings.NewReader(m.BodyText))
+	return m.Response
 }
 
 func getMockId(httpMethod string, url string) string {
@@ -46,7 +54,8 @@ func Post(url string, body interface{}, headers http.Header) (*http.Response, er
 		if mock == nil {
 			return nil, errors.New("no mockup found for give request")
 		}
-		return mock.Response, mock.Err
+		// here lies the magic
+		return mock.GetResponse(), mock.Err
 	}
 
 	jsonBytes, err := json.Marshal(body)
