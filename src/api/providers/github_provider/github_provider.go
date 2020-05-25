@@ -1,13 +1,14 @@
 package github_provider
 
 import (
-	"github.com/federicoleon/golang-microservices/src/api/domain/github"
-	"fmt"
-	"github.com/federicoleon/golang-microservices/src/api/clients/restclient"
-	"net/http"
-	"log"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"log"
+	"net/http"
+
+	"github.com/federicoleon/golang-microservices/src/api/clients/restclient"
+	"github.com/federicoleon/golang-microservices/src/api/domain/github"
 )
 
 const (
@@ -17,6 +18,14 @@ const (
 	urlCreateRepo = "https://api.github.com/user/repos"
 )
 
+var (
+	restClientInterface restclient.RestClientInterface
+)
+
+func init() {
+	restClientInterface = &restclient.RestClient{}
+}
+
 func getAuthorizationHeader(accessToken string) string {
 	return fmt.Sprintf(headerAuthorizationFormat, accessToken)
 }
@@ -25,7 +34,7 @@ func CreateRepo(accessToken string, request github.CreateRepoRequest) (*github.C
 	headers := http.Header{}
 	headers.Set(headerAuthorization, getAuthorizationHeader(accessToken))
 
-	response, err := restclient.Post(urlCreateRepo, request, headers)
+	response, err := restClientInterface.Post(urlCreateRepo, request, headers)
 	if err != nil {
 		log.Println(fmt.Sprintf("error when trying to create new repo in github: %s", err.Error()))
 		return nil, &github.GithubErrorResponse{StatusCode: http.StatusInternalServerError, Message: err.Error()}

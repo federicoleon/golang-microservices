@@ -1,53 +1,18 @@
 package restclient
 
 import (
-	"net/http"
-	"encoding/json"
 	"bytes"
-	"errors"
-	"fmt"
+	"encoding/json"
+	"net/http"
 )
 
-var (
-	enabledMocks = false
-	mocks        = make(map[string]*Mock)
-)
+type RestClient struct{}
 
-type Mock struct {
-	Url        string
-	HttpMethod string
-	Response   *http.Response
-	Err        error
+type RestClientInterface interface {
+	Post(url string, body interface{}, headers http.Header) (*http.Response, error)
 }
 
-func getMockId(httpMethod string, url string) string {
-	return fmt.Sprintf("%s_%s", httpMethod, url)
-}
-
-func StartMockups() {
-	enabledMocks = true
-}
-
-func FlushMockups() {
-	mocks = make(map[string]*Mock)
-}
-
-func StopMockups() {
-	enabledMocks = false
-}
-
-func AddMockup(mock Mock) {
-	mocks[getMockId(mock.HttpMethod, mock.Url)] = &mock
-}
-
-func Post(url string, body interface{}, headers http.Header) (*http.Response, error) {
-	if enabledMocks {
-		mock := mocks[getMockId(http.MethodPost, url)]
-		if mock == nil {
-			return nil, errors.New("no mockup found for give request")
-		}
-		return mock.Response, mock.Err
-	}
+func (r *RestClient) Post(url string, body interface{}, headers http.Header) (*http.Response, error) {
 
 	jsonBytes, err := json.Marshal(body)
 	if err != nil {
