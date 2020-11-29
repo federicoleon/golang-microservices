@@ -27,13 +27,14 @@ type userDao struct{}
 
 func (u *userDao) GetUser(userId int64) (*User, *utils.ApplicationError) {
 	log.Println("we're accessing the database")
-	if user := users[userId]; user != nil {
-		return user, nil
+	user, ok := users[userId]
+	if !ok {
+		return nil, &utils.ApplicationError{
+			Message:    fmt.Sprintf("user %v does not exists", userId),
+			StatusCode: http.StatusNotFound,
+			Code:       "not_found",
+		}
 	}
-
-	return nil, &utils.ApplicationError{
-		Message:    fmt.Sprintf("user %v does not exists", userId),
-		StatusCode: http.StatusNotFound,
-		Code:       "not_found",
-	}
+	return user, nil
+	
 }
